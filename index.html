@@ -67,6 +67,7 @@ select{font:inherit;font-size:14px;padding:7px 10px;border:1px solid var(--line)
 .chip.rec-on{background:var(--rec-line);border-color:var(--rec-line);color:#3D2800}
 .body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:4px;flex:1}
 .price{font-size:20px;font-weight:800;letter-spacing:-0.01em}
+.price .pl{font-size:16px;font-weight:800;color:var(--accent);margin-right:8px;letter-spacing:-0.02em}
 .price small{font-size:13px;font-weight:500;color:var(--sub);margin-left:6px}
 .was{font-size:13px;color:var(--drop)}
 .spec{color:var(--sub);font-size:14px}
@@ -115,6 +116,7 @@ select{font:inherit;font-size:14px;padding:7px 10px;border:1px solid var(--line)
 #map.school-far .school-pin span{display:none}
 .note{margin-top:22px;color:var(--mute);font-size:13px}
 .chip.zero{opacity:.45}
+.fresh-bar{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:2000;border:0;border-radius:999px;background:#191F28;color:#fff;font:inherit;font-size:14px;font-weight:700;padding:12px 20px;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer;max-width:calc(100% - 32px)}
 .tools .chip{margin-left:0}
 /* 지도: 노선 범례는 접어 두고 버튼으로 펼친다. 말풍선이 뜨면 범례를 숨겨 가리지 않게 */
 .legend-btn{background:rgba(255,255,255,.95);border:0;border-radius:10px;padding:7px 11px;font:inherit;font-size:12px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.2);cursor:pointer;display:block;margin-left:auto}
@@ -319,6 +321,13 @@ select{font:inherit;font-size:14px;padding:7px 10px;border:1px solid var(--line)
   // 위치 확인용: 네이버 지도(좌표로 이동)와 카카오 로드뷰(건물 외관)
   function naverUrl(x){ return 'https://map.naver.com/p?c='+x.lng+','+x.lat+',19,0,0,0,dh'; }
   function roadUrl(x){ return 'https://map.kakao.com/link/roadview/'+x.lat+','+x.lng; }
+  // 카드 가격 앞에 붙는 위치: '마포구 망원동'. 직방은 시·구 이름이 없어 지역 이름으로 채운다
+  function placeName(x){
+    var gu = x.sgg || (x.areas||[]).filter(function(a){ return /(구|시)$/.test(a); })[0] || (x.areas||[])[0] || '';
+    gu = gu.replace(/^(\S+시) (\S+구)$/, '$1');  // '안양시 동안구' → '안양시'
+    var d = x.dong || '';
+    return d && gu.indexOf(d)<0 ? (gu ? gu + ' ' : '') + d : (gu || d);
+  }
   function card(x){
     var isRec = x.rec && x.rec.length;
     var b = '';
@@ -336,7 +345,7 @@ select{font:inherit;font-size:14px;padding:7px 10px;border:1px solid var(--line)
     var lo = x.deposit <= 2000;
     return '<div class="card' + (isRec ? ' rec' : '') + (lo ? ' dlo' : ' dhi') + (x.gone ? ' gone' : '') + '"><div class="ph">' + (x.img ? '<img loading="lazy" src="'+esc(x.img)+'" alt="">' : '') +
       '<div class="badges">'+b+'</div>' + (x.gone ? '' : '<button type="button" class="hd' + (HD[x.id] ? ' un' : '') + '" data-id="' + esc(x.id) + '">' + (HD[x.id] ? '숨김 해제' : '✕ 숨기기') + '</button>') +'<button type="button" class="zz' + (ZZ[x.id] ? ' on' : '') + '" data-id="' + esc(x.id) + '" aria-label="찜">' + (ZZ[x.id] ? '♥' : '♡') + '</button>' + (x.gone ? '<div class="gone-tag">목록에서 내려간 매물</div>' : '') + (x.room!=='투룸' ? '<span class="three">쓰리룸</span>' : '') + '</div><div class="body">' +
-      '<div><span class="dep ' + (lo ? 'lo' : 'hi') + '">' + (lo ? '보증금 2천 이하' : '보증금 2천 초과') + '</span></div><div class="price">' + won(x.deposit) + ' / ' + x.rent + '<small>관리비 ' + (x.manage!=null ? x.manage + '만' : '정보 없음') + '</small></div>' + was +
+      '<div><span class="dep ' + (lo ? 'lo' : 'hi') + '">' + (lo ? '보증금 2천 이하' : '보증금 2천 초과') + '</span></div><div class="price"><span class="pl">' + esc(placeName(x)) + '</span>' + won(x.deposit) + ' / ' + x.rent + '<small>관리비 ' + (x.manage!=null ? x.manage + '만' : '정보 없음') + '</small></div>' + was +
       '<div class="spec">' + esc(spec) + '</div>' + why +
       ((x.pet || x.park || x.htype) ? '<div class="tags">' + (x.htype ? '<span class="pet ' + (x.htype==='근생' ? 'warn' : 'kind') + '">' + (x.htype==='근생' ? '⚠ 근린생활시설 (주택 아님)' : '🏠 ' + x.htype) + '</span>' : '') +(x.park ? '<span class="pet ' + (x.park==='불가' ? 'no' : 'yes') + '">🅿 주차 ' + x.park + (x.park_per ? ' (세대당 ' + x.park_per + '대)' : '') + '</span>' : '') + (x.pet ? '<span class="pet ' + (x.pet==='불가' ? 'no' : 'yes') + '">🐾 반려동물 ' + x.pet + '</span>' : '') + '</div>' : '') +
       '<div class="ttl" title="'+esc(x.title)+'">' + esc(x.title) + '</div>' +
@@ -507,6 +516,21 @@ select{font:inherit;font-size:14px;padding:7px 10px;border:1px solid var(--line)
   document.getElementById('vCard').onclick = function(){ st.view='card'; save(); render(); };
   document.getElementById('vMap').onclick = function(){ st.view='map'; save(); render(); };
   render();
+  // 켜 둔 동안 뒤에서 새로 수집이 끝나면 알려준다 (1분마다 확인)
+  if(location.protocol!=='file:'){
+    setInterval(function(){
+      fetch('data/data.js?t=' + Date.now(), {cache:'no-store'}).then(function(r){ return r.ok ? r.text() : ''; }).then(function(t){
+        var m = /"updated":\s*"([^"]+)"/.exec(t || '');
+        if(m && m[1] !== D.updated && !document.getElementById('freshBar')){
+          var b = document.createElement('button');
+          b.id = 'freshBar'; b.type = 'button'; b.className = 'fresh-bar';
+          b.textContent = '새로 수집한 매물이 들어왔습니다 (' + m[1].slice(5) + ') · 눌러서 새로고침';
+          b.onclick = function(){ location.reload(); };
+          document.body.appendChild(b);
+        }
+      }).catch(function(){});
+    }, 60000);
+  }
 })();
 </script>
 </body>
