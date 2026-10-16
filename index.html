@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:,">
+<title>매물 모아보기</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{--bg:#F5F6F8;--card:#fff;--ink:#191F28;--sub:#4E5968;--mute:#8B95A1;--line:#E5E8EB;--accent:#1B64DA;--accent-soft:#E8F0FD;--new:#0A7D4F;--new-soft:#E3F5EC;--drop:#B4541A;--drop-soft:#FDF0E6;--rec:#8A5A00;--rec-soft:#FFF1C9;--rec-line:#E8B323;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Pretendard Variable",Pretendard,"Malgun Gothic",sans-serif;font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 60px}
+header h1{font-size:26px;margin:0 0 4px;letter-spacing:-0.02em}
+.meta{color:var(--sub);font-size:14px}
+.err{margin-top:10px;padding:10px 14px;background:var(--drop-soft);color:var(--drop);border-radius:10px;font-size:14px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 14px}
+.stat{background:var(--card);border-radius:12px;padding:10px 16px;min-width:110px}
+.stat b{display:block;font-size:22px}
+.stat span{color:var(--sub);font-size:13px}
+.stat{border:2px solid transparent;cursor:pointer;font:inherit;text-align:left;color:inherit;transition:border-color .15s,background .15s}
+.stat:hover{border-color:var(--line)}
+.stat.on{border-color:var(--accent);background:var(--accent-soft)}
+.stat.on b{color:var(--accent)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip .n{opacity:.7;margin-left:4px}
+select{font:inherit;font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.spacer{flex:1}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:8px}
+.card{background:var(--card);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;border:1px solid var(--line)}
+.ph{position:relative;aspect-ratio:4/3;background:#e9ecef;overflow:hidden}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.badges{position:absolute;left:8px;top:8px;display:flex;gap:6px;flex-wrap:wrap}
+.dep{display:inline-block;font-size:12px;font-weight:800;padding:3px 8px;border-radius:6px;margin-bottom:2px}
+.dep.lo{background:#FFD43B;color:#4A3500}
+.dep.hi{background:#1FA463;color:#fff}
+.card.dlo .body{border-top:5px solid #FFD43B}
+.card.dhi .body{border-top:5px solid #1FA463}
+.dep-legend{background:rgba(255,255,255,.95);border-radius:10px;padding:7px 10px;font-size:12px;line-height:1.7;box-shadow:0 1px 4px rgba(0,0,0,.2);font-family:"Pretendard Variable",Pretendard,sans-serif}
+.dep-legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px;border:1.5px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.pet{display:inline-block;align-self:flex-start;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px}
+.pet.no{background:#EEF0F3;color:#4E5968}
+.pet.yes{background:#E8F0FD;color:#1B64DA}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.pet.kind{background:#F2F4F6;color:#333D4B}
+.pet.warn{background:#FFF4E5;color:#B45309}
+.bd{font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px}
+.bd.new{background:var(--new-soft);color:var(--new)}
+.bd.drop{background:var(--drop-soft);color:var(--drop)}
+.bd.rec{background:#fff;color:#191F28;font-size:13px;padding:3px 10px 3px 7px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.bd.rec .rs{color:#FFB800;font-size:16px;margin-right:3px;text-shadow:0 0 1px #8A5A00}
+.card.rec{}
+.why{font-size:13px;font-weight:700;color:var(--rec);background:var(--rec-soft);border-radius:6px;padding:3px 8px;align-self:flex-start}
+.bd.south{background:var(--rec-soft);color:var(--rec)}
+.three{position:absolute;right:8px;top:8px;background:#FFE3EC;color:#C2255C;font-size:13px;font-weight:800;padding:4px 10px;border-radius:999px;box-shadow:0 2px 6px rgba(194,37,92,.25);animation:wiggle 2.4s ease-in-out infinite}
+.three b{color:#F5B400;font-size:15px;margin-right:3px;text-shadow:0 0 1px #C2255C}
+@keyframes wiggle{0%,86%,100%{transform:rotate(0)}90%{transform:rotate(-8deg)}94%{transform:rotate(8deg)}}
+@media (prefers-reduced-motion:reduce){.three{animation:none}}
+.star-pin{background:none;border:0}
+.zz-pin{background:none;border:0}
+.zz-pin span{display:block;transform:translate(-50%,-52%);color:#F04452;line-height:1;text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 1px #fff}
+.star-pin span{display:block;transform:translate(7px,-27px);color:#FFC61A;font-size:26px;line-height:1;text-shadow:0 0 2px #C2255C,0 0 2px #C2255C}
+.chip.rec-on{background:var(--rec-line);border-color:var(--rec-line);color:#3D2800}
+.body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:4px;flex:1}
+.price{font-size:20px;font-weight:800;letter-spacing:-0.01em}
+.price small{font-size:13px;font-weight:500;color:var(--sub);margin-left:6px}
+.was{font-size:13px;color:var(--drop)}
+.spec{color:var(--sub);font-size:14px}
+.ttl{font-size:14px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.loc{font-size:13px;color:var(--mute)}
+.agent{font-size:13px;color:var(--mute);margin-top:2px}
+.agent a{color:var(--accent);text-decoration:none;font-weight:600}
+.links{display:flex;gap:6px;margin-top:auto;padding-top:10px}
+.links a{flex:1;text-align:center;text-decoration:none;font-size:14px;font-weight:600;padding:8px 0;border-radius:9px;background:var(--accent-soft);color:var(--accent)}
+.zz{position:absolute;right:8px;bottom:8px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.95);box-shadow:0 1px 5px rgba(0,0,0,.3);font-size:20px;line-height:38px;text-align:center;color:#B0B8C1;cursor:pointer;padding:0}
+.zz.on{color:#F04452}
+.chip.zz-chip.on{background:#F04452;border-color:#F04452;color:#fff}
+.card.gone{opacity:.6}
+.gone-tag{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;background:rgba(25,31,40,.8);color:#fff;font-weight:700;font-size:14px;padding:8px 0}
+.geo{display:flex;gap:6px;margin-top:6px}
+.geo a{flex:1;text-align:center;text-decoration:none;font-size:13px;font-weight:700;padding:7px 0;border-radius:9px;border:1px solid var(--line);background:#fff}
+.geo a.nv{color:#03A94D}
+.geo a.rv{color:#3B4BB8}
+.empty{padding:50px 0;text-align:center;color:var(--sub)}
+#map{height:620px;border-radius:14px;margin-top:8px;display:none;border:1px solid var(--line)}
+.pop{font-family:inherit;font-size:13px;line-height:1.45}
+.pop b{font-size:15px}
+.pop a{color:var(--accent)}
+.pzz{margin-top:8px;width:100%;padding:7px 0;border-radius:8px;border:1px solid #F04452;background:#fff;color:#F04452;font:inherit;font-weight:700;font-size:13px;cursor:pointer}
+.pzz.on{background:#F04452;color:#fff}
+.hd{position:absolute;left:8px;bottom:8px;height:30px;padding:0 11px;border-radius:999px;border:0;background:rgba(25,31,40,.72);color:#fff;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.hd.un{background:#1B64DA}
+.phd{margin-top:6px;width:100%;padding:7px 0;border-radius:8px;border:1px solid #8B95A1;background:#fff;color:#4E5968;font:inherit;font-weight:700;font-size:13px;cursor:pointer}
+.chip.hd-chip.on{background:#4E5968;border-color:#4E5968;color:#fff}
+.st-label{background:none;border:0}
+.st-label span{display:inline-block;transform:translate(-50%,-150%);white-space:nowrap;background:#0B3D91;color:#fff;font-weight:800;font-size:16px;padding:5px 11px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.25);font-family:"Pretendard Variable",Pretendard,sans-serif}
+.st-label.below span{transform:translate(-50%,40%)}
+.sw-label{background:none;border:0}
+.sw-label span{display:inline-block;transform:translate(6px,-50%);white-space:nowrap;font-size:13px;font-weight:700;color:#191F28;font-family:"Pretendard Variable",Pretendard,sans-serif;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff,0 0 3px #fff}
+#map.z-far .sw-label{display:none}
+#map.z-mid .sw-label span{font-size:11px}
+.legend{background:rgba(255,255,255,.94);border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.7;box-shadow:0 1px 4px rgba(0,0,0,.2);display:grid;grid-template-columns:auto auto;column-gap:12px;font-family:"Pretendard Variable",Pretendard,sans-serif}
+.legend div{white-space:nowrap}
+.legend i{display:inline-block;width:18px;height:5px;border-radius:3px;margin-right:6px;vertical-align:middle}
+@media (max-width:600px){.legend{font-size:10px;line-height:1.5;padding:5px 7px;column-gap:8px}.legend i{width:12px;height:4px;margin-right:4px}}
+.school-pin{background:none;border:0}
+.school-pin div{display:flex;align-items:center;gap:3px;transform:translate(-11px,-11px);white-space:nowrap;pointer-events:none}
+.school-pin b{display:flex;align-items:center;justify-content:center;width:22px;height:22px;flex:none;border-radius:50%;background:#fff;border:1.5px solid #C25E00;font-size:13px;line-height:1;font-weight:400;box-shadow:0 1px 2px rgba(0,0,0,.3);font-family:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif}
+.school-pin span{font-size:11px;font-weight:700;color:#7A3E00;font-family:"Pretendard Variable",Pretendard,sans-serif;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff}
+#map.school-off .school-pin{display:none}
+#map.school-far .school-pin span{display:none}
+.note{margin-top:22px;color:var(--mute);font-size:13px}
+.chip.zero{opacity:.45}
+.tools .chip{margin-left:0}
+/* 지도: 노선 범례는 접어 두고 버튼으로 펼친다. 말풍선이 뜨면 범례를 숨겨 가리지 않게 */
+.legend-btn{background:rgba(255,255,255,.95);border:0;border-radius:10px;padding:7px 11px;font:inherit;font-size:12px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.2);cursor:pointer;display:block;margin-left:auto}
+.legend{display:none;margin-top:6px}
+.legend.open{display:grid}
+#map.pop-open .legend,#map.pop-open .legend-btn,#map.pop-open .dep-legend{display:none}
+#map.z-far .leaflet-stations-pane{display:none}
+/* 휴대폰: 첫 화면에 매물이 바로 보이도록 위쪽을 압축 */
+@media (max-width:600px){
+  .wrap{padding-left:16px;padding-right:16px}
+  header h1{font-size:22px}
+  .meta{font-size:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+  .meta.open{display:block}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+  .stat{min-width:0;padding:8px 8px}
+  .stat b{font-size:18px}
+  .stat span{font-size:11px;word-break:keep-all;line-height:1.3;display:block}
+  #areaBar,.bar.filters{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-left:-16px;margin-right:-16px;padding:0 16px 2px}
+  #areaBar::-webkit-scrollbar,.bar.filters::-webkit-scrollbar{display:none}
+  #areaBar .chip,.bar.filters .chip{flex:none;white-space:nowrap}
+  .tools{flex-wrap:nowrap}
+  .tools select{flex:1;min-width:0;height:40px}
+  .tools .chip{flex:none;height:40px}
+  .hd{height:36px;padding:0 13px}
+  .dep-legend{font-size:10.5px;line-height:1.5;padding:4px 8px}
+  .dep-legend i{width:9px;height:9px}
+  #map{height:70vh}
+  .grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>매물 모아보기</h1>
+    <div class="meta" id="meta"></div>
+    <div id="errs"></div>
+  </header>
+  <div class="stats" id="stats"></div>
+  <div class="bar" id="areaBar"></div>
+  <div class="bar filters">
+    <button class="chip" id="fRec">추천만 (남향 또는 채광)</button>
+    <button class="chip" id="fNew">신규 매물만 (3일 이내)</button>
+    <button class="chip" id="fDrop">가격 내린 것만</button>
+    <button class="chip" id="fApt">아파트 <span class="n" id="aptN">0</span></button>
+    <button class="chip" id="fDase">다세대 <span class="n" id="daseN">0</span></button>
+    <button class="chip" id="fDaga">다가구 <span class="n" id="dagaN">0</span></button>
+    <button class="chip zz-chip" id="fZz">♥ 찜한 것만 <span class="n" id="zzN">0</span></button>
+    <button class="chip hd-chip" id="fHd">숨긴 매물 <span class="n" id="hdN">0</span></button>
+  </div>
+  <div class="bar tools">
+    <select id="sort">
+      <option value="rec">추천 먼저, 그다음 월 부담 낮은 순</option>
+      <option value="total">관리비 포함 월 부담 낮은 순</option>
+      <option value="rent">월세 낮은 순</option>
+      <option value="deposit">보증금 낮은 순</option>
+      <option value="area">면적 넓은 순</option>
+      <option value="first">새로 본 순</option>
+    </select>
+    <button class="chip on" id="vCard">목록</button>
+    <button class="chip" id="vMap">지도</button>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="err" id="mapNote" style="display:none">파일을 직접 열어서 확대하면 지도가 비어 보입니다. 바탕화면의 "매물 모아보기" 바로가기로 열면 자세한 지도가 나옵니다.</div>
+  <div id="map"></div>
+  <p class="note">직방·다방·네이버 자료를 개인 열람용으로 모은 것입니다. 계약 전에는 반드시 원본 매물과 중개사에게 확인하세요. 다방 위치는 사이트가 일부러 흐려 둔 좌표라 지도 핀이 실제와 수백 m 다를 수 있습니다.</p>
+</div>
+<script src="data/data.js"></script>
+<script src="data/subway.js"></script>
+<script src="data/school.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function(){
+  var D = window.MAEMUL;
+  if(!D){document.getElementById('grid').innerHTML='<div class="empty">아직 수집한 자료가 없습니다. 바탕화면의 "매물 모아보기" 바로가기를 실행하세요.</div>';return;}
+  var st = {area:'전체', onlyRec:false, onlyNew:false, onlyDrop:false, sort:'rec', view:'card', v:3};
+  // v3 (10/16 조건 초기화): 예전 지역·버튼 선택은 버리고 정렬·보기 방식만 이어받는다
+  try{ var saved = JSON.parse(localStorage.getItem('maemul-ui')||'{}'); if(saved.v!==3){ var keep = {}; if(saved.sort) keep.sort = saved.sort; if(saved.view) keep.view = saved.view; saved = keep; } Object.assign(st, saved); st.v=3; }catch(e){}
+  function save(){ try{localStorage.setItem('maemul-ui', JSON.stringify(st));}catch(e){} }
+  var ZZ = {};
+  try{ ZZ = JSON.parse(localStorage.getItem('maemul-zzim')||'{}') || {}; }catch(e){ ZZ = {}; }
+  // 찜은 브라우저와 PC 파일(data/찜.json) 두 곳에 저장한다. 브라우저 기록을 지워도 파일에서 되살린다.
+  var zzReady = false;
+  function postZz(){
+    if(location.protocol==='file:' || !zzReady) return;
+    fetch('/zzim', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(ZZ)}).catch(function(){});
+  }
+  function saveZz(){ try{localStorage.setItem('maemul-zzim', JSON.stringify(ZZ));}catch(e){} document.getElementById('zzN').textContent = Object.keys(ZZ).length; postZz(); }
+  function loadZzFile(){
+    if(location.protocol==='file:') return;
+    fetch(encodeURI('data/찜.json') + '?t=' + Date.now(), {cache:'no-store'}).then(function(r){ return r.ok ? r.json() : {}; }).catch(function(){ return {}; }).then(function(f){
+      f = (f && typeof f==='object') ? f : {};
+      var add = 0;
+      // 파일에만 있는 찜은 되살린다 (브라우저 기록이 지워진 경우)
+      if(Object.keys(ZZ).length===0){ Object.keys(f).forEach(function(k){ ZZ[k]=f[k]; add++; }); }
+      zzReady = true;
+      saveZz();
+      if(add) render();
+    });
+  }
+  function toggleZz(id){
+    if(ZZ[id]) delete ZZ[id];
+    else { var x = items.filter(function(i){return i.id===id;})[0]; if(x) ZZ[id] = x; }
+    saveZz();
+    zzPin(id);
+  }
+  var ZP = {};
+  function zzPin(id){
+    var q = ZP[id]; if(!q || !layer) return;
+    if(ZZ[id] && !q.m){
+      q.m = L.marker([q.lat,q.lng],{interactive:false,keyboard:false,icon:L.divIcon({className:'zz-pin',html:'<span style="font-size:'+(q.rec?16:13)+'px">♥</span>',iconSize:null})}).addTo(layer);
+    } else if(!ZZ[id] && q.m){ layer.removeLayer(q.m); q.m = null; }
+  }
+  // 숨긴 매물: 찜처럼 브라우저와 PC 파일(data/숨김.json) 두 곳에 저장. 숨기면 목록·지도에서 빠진다
+  var HD = {};
+  try{ HD = JSON.parse(localStorage.getItem('maemul-hidden')||'{}') || {}; }catch(e){ HD = {}; }
+  var hdReady = false;
+  function saveHd(){
+    try{localStorage.setItem('maemul-hidden', JSON.stringify(HD));}catch(e){}
+    if(location.protocol!=='file:' && hdReady) fetch('/hidden', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(HD)}).catch(function(){});
+  }
+  function loadHdFile(){
+    if(location.protocol==='file:') return;
+    fetch(encodeURI('data/숨김.json') + '?t=' + Date.now(), {cache:'no-store'}).then(function(r){ return r.ok ? r.json() : {}; }).catch(function(){ return {}; }).then(function(f){
+      f = (f && typeof f==='object') ? f : {};
+      var add = 0;
+      if(Object.keys(HD).length===0){ Object.keys(f).forEach(function(k){ HD[k]=f[k]; add++; }); }
+      hdReady = true; saveHd();
+      if(add) render();
+    });
+  }
+  function toggleHd(id){
+    if(HD[id]) delete HD[id];
+    else { var x = items.filter(function(i){return i.id===id;})[0]; HD[id] = x ? {dong:x.dong, deposit:x.deposit, rent:x.rent, title:x.title} : {}; }
+    saveHd();
+  }
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function won(n){ if(n>=10000){var e=Math.floor(n/10000),r=n%10000;return e+'억'+(r?' '+r.toLocaleString():'');} return n.toLocaleString(); }
+  function total(x){ return x.rent + (x.manage||0); }
+  function pyeong(m2){ return m2 ? (m2/3.3058).toFixed(1) : ''; }
+  var c = D.cond;
+  document.getElementById('meta').textContent = c['요약'] ? '마지막 수집 ' + D.updated + '  |  ' + c['요약'] : '마지막 수집 ' + D.updated + '  |  월세 보증금 ' + won(c['보증금_최대']) + '만 이하, 월 ' + c['월세_최대'] + '만 이하, 투룸 이상, ' + (c['면적_최소_m2'] ? c['면적_최소_m2'] + '㎡ 이상, ' : '') + c['최저층'] + '층 이상, 역 반경 ' + (c['역_반경_m']/1000) + 'km';
+  document.getElementById('meta').onclick = function(){ this.classList.toggle('open'); };  // 휴대폰에서 접힌 조건 펼치기
+  if(D.errors && D.errors.length){ document.getElementById('errs').innerHTML = D.errors.map(function(e){return '<div class="err">'+esc(e)+' (이번 목록에서 빠졌습니다)</div>';}).join(''); }
+  var items = D.items;
+  var nRec = items.filter(function(x){return x.rec && x.rec.length;}).length, nNew = items.filter(function(x){return x.new;}).length, nDrop = items.filter(function(x){return x.drop;}).length;
+  function renderStats(){
+    var k = (st.area!=='전체' || st.onlyZz) ? '' : (!st.onlyRec&&!st.onlyNew&&!st.onlyDrop ? 'all' : (st.onlyRec&&!st.onlyNew&&!st.onlyDrop ? 'rec' : (st.onlyNew&&!st.onlyRec&&!st.onlyDrop ? 'new' : (st.onlyDrop&&!st.onlyRec&&!st.onlyNew ? 'drop' : ''))));
+    function b(key,n,label){ return '<button type="button" class="stat'+(k===key?' on':'')+'" data-k="'+key+'"><b>'+n+'</b><span>'+label+'</span></button>'; }
+    var el = document.getElementById('stats');
+    // 숨긴 매물은 숫자에서도 뺀다
+    var vis = items.filter(function(x){ return !HD[x.id]; });
+    var nR = vis.filter(function(x){return x.rec && x.rec.length;}).length, nN = vis.filter(function(x){return x.new;}).length, nD = vis.filter(function(x){return x.drop;}).length;
+    el.innerHTML = b('all',vis.length,'전체 매물')+b('rec',nR,'추천 (남향 또는 채광)')+b('new',nN,'신규 (3일 이내)')+b('drop',nD,'가격 내림');
+    Array.prototype.forEach.call(el.querySelectorAll('.stat'), function(x){ x.onclick=function(){
+      var key = x.getAttribute('data-k'); if(key===k) key='all';
+      st.area='전체'; st.onlyZz=false; st.onlyRec=key==='rec'; st.onlyNew=key==='new'; st.onlyDrop=key==='drop'; save(); render();
+    }; });
+  }
+  function renderAreas(){
+    var names = ['전체'].concat(D.areas);
+    document.getElementById('areaBar').innerHTML = names.map(function(n){
+      var cnt = items.filter(function(x){return !HD[x.id] && (n==='전체' || x.areas.indexOf(n)>=0);}).length;
+      return '<button class="chip'+(st.area===n?' on':'')+(cnt===0?' zero':'')+'" data-a="'+esc(n)+'">'+esc(n)+'<span class="n">'+cnt+'</span></button>';
+    }).join('');
+    Array.prototype.forEach.call(document.querySelectorAll('#areaBar .chip'), function(b){ b.onclick=function(){ st.area=b.getAttribute('data-a'); save(); render(); }; });
+  }
+  function filtered(){
+    var base = items;
+    if(st.onlyZz){
+      var live = {}; items.forEach(function(x){ live[x.id]=1; });
+      base = items.filter(function(x){ return ZZ[x.id]; }).concat(Object.keys(ZZ).filter(function(id){ return !live[id]; }).map(function(id){ return Object.assign({}, ZZ[id], {gone:true}); }));
+    }
+    // 숨긴 매물 보기면 숨긴 것만, 아니면 숨긴 것을 뺀다 (다른 조건은 숨긴 매물 보기에선 무시)
+    if(st.showHd) return items.filter(function(x){ return HD[x.id]; });
+    base = base.filter(function(x){ return !HD[x.id]; });
+    var xs = base.filter(function(x){
+      if(st.area!=='전체' && x.areas.indexOf(st.area)<0) return false;
+      if(st.onlyRec && !(x.rec && x.rec.length)) return false;
+      if(st.onlyNew && !x.new) return false;
+      if(st.onlyDrop && !x.drop) return false;
+      // 아파트·다세대·다가구: 여러 개 켜면 켠 종류가 다 보인다 (연립은 다세대 쪽에 함께)
+      if(st.onlyApt || st.onlyDaga || st.onlyDase){
+        var ok = (st.onlyApt && x.kind==='아파트') || (st.onlyDaga && x.htype==='다가구') || (st.onlyDase && (x.htype==='다세대' || x.htype==='연립'));
+        if(!ok) return false;
+      }
+      return true;
+    });
+    var k = st.sort;
+    xs.sort(function(a,b){
+      if(k==='rec'){ var ra = (a.rec&&a.rec.length)?0:1, rb = (b.rec&&b.rec.length)?0:1; return ra-rb || total(a)-total(b); }
+      if(k==='total') return total(a)-total(b);
+      if(k==='rent') return a.rent-b.rent;
+      if(k==='deposit') return a.deposit-b.deposit;
+      if(k==='area') return (b.area||0)-(a.area||0);
+      if(k==='first') return (b.first||'').localeCompare(a.first||'');
+      return 0;
+    });
+    return xs;
+  }
+  function floorText(x){ var f = x.floor; if(/^\d+$/.test(f)) f += '층'; return f + (x.bfloor ? ' / ' + x.bfloor + '층 건물' : ''); }
+  // 위치 확인용: 네이버 지도(좌표로 이동)와 카카오 로드뷰(건물 외관)
+  function naverUrl(x){ return 'https://map.naver.com/p?c='+x.lng+','+x.lat+',19,0,0,0,dh'; }
+  function roadUrl(x){ return 'https://map.kakao.com/link/roadview/'+x.lat+','+x.lng; }
+  function card(x){
+    var isRec = x.rec && x.rec.length;
+    var b = '';
+    if(isRec) b += '<span class="bd rec"><b class="rs">★</b>추천</span>';
+    else if(x.south) b += '<span class="bd south">' + esc(x.dir) + '</span>';
+    if(x.new) b += '<span class="bd new">신규</span>';
+    if(x.drop) b += '<span class="bd drop">가격 내림</span>';
+    var was = x.drop ? '<div class="was">이전 ' + won(x.drop.deposit) + ' / ' + x.drop.rent + '</div>' : '';
+    // 건물 종류: 다세대·다가구·연립은 건축물 용도로 표시, 근생(근린생활시설)은 주택이 아니라 따로 알림
+    var kindTxt = x.htype==='근생' ? '근생 건물' : (x.htype || x.kind);
+    var spec = [x.room.replace('+',''), kindTxt,x.area ? x.area + '㎡ (' + pyeong(x.area) + '평)' : '', floorText(x), x.dir].filter(Boolean).join(' · ');
+    var why = isRec ? '<div class="why">' + esc(x.rec.join(' · ')) + (x.sun && x.sun.length ? ' (설명: ' + esc(x.sun.slice(0,3).join(', ')) + ')' : '') + '</div>' : '';
+    var links = x.links.map(function(l){ return '<a href="'+esc(l.url)+'" target="_blank" rel="noopener">'+esc(l.src)+'에서 보기</a>'; }).join('');
+    var geo = x.lat ? '<div class="geo"><a class="nv" href="'+naverUrl(x)+'" target="_blank" rel="noopener">네이버 지도</a><a class="rv" href="'+roadUrl(x)+'" target="_blank" rel="noopener">로드뷰</a></div>' : '';
+    var lo = x.deposit <= 2000;
+    return '<div class="card' + (isRec ? ' rec' : '') + (lo ? ' dlo' : ' dhi') + (x.gone ? ' gone' : '') + '"><div class="ph">' + (x.img ? '<img loading="lazy" src="'+esc(x.img)+'" alt="">' : '') +
+      '<div class="badges">'+b+'</div>' + (x.gone ? '' : '<button type="button" class="hd' + (HD[x.id] ? ' un' : '') + '" data-id="' + esc(x.id) + '">' + (HD[x.id] ? '숨김 해제' : '✕ 숨기기') + '</button>') +'<button type="button" class="zz' + (ZZ[x.id] ? ' on' : '') + '" data-id="' + esc(x.id) + '" aria-label="찜">' + (ZZ[x.id] ? '♥' : '♡') + '</button>' + (x.gone ? '<div class="gone-tag">목록에서 내려간 매물</div>' : '') + (x.room!=='투룸' ? '<span class="three">쓰리룸</span>' : '') + '</div><div class="body">' +
+      '<div><span class="dep ' + (lo ? 'lo' : 'hi') + '">' + (lo ? '보증금 2천 이하' : '보증금 2천 초과') + '</span></div><div class="price">' + won(x.deposit) + ' / ' + x.rent + '<small>관리비 ' + (x.manage!=null ? x.manage + '만' : '정보 없음') + '</small></div>' + was +
+      '<div class="spec">' + esc(spec) + '</div>' + why +
+      ((x.pet || x.park || x.htype) ? '<div class="tags">' + (x.htype ? '<span class="pet ' + (x.htype==='근생' ? 'warn' : 'kind') + '">' + (x.htype==='근생' ? '⚠ 근린생활시설 (주택 아님)' : '🏠 ' + x.htype) + '</span>' : '') +(x.park ? '<span class="pet ' + (x.park==='불가' ? 'no' : 'yes') + '">🅿 주차 ' + x.park + (x.park_per ? ' (세대당 ' + x.park_per + '대)' : '') + '</span>' : '') + (x.pet ? '<span class="pet ' + (x.pet==='불가' ? 'no' : 'yes') + '">🐾 반려동물 ' + x.pet + '</span>' : '') + '</div>' : '') +
+      '<div class="ttl" title="'+esc(x.title)+'">' + esc(x.title) + '</div>' +
+      '<div class="loc">' + esc(x.sgg ? x.sgg + ' ' + x.dong : x.dong) + ' · ' + esc(x.areas.join(', ')) + ' · ' + esc((x.first||'').slice(5).replace('-','/')) + ' 첫 등록 확인' + '</div>' +
+      (x.agent ? '<div class="agent">' + esc(x.agent) + (x.tel ? ' · <a href="tel:' + esc(x.tel) + '">' + esc(x.tel) + '</a>' : '') + '</div>' : '') +
+      '<div class="links">' + links + '</div>' + geo + '</div></div>';
+  }
+  var map, layer;
+  // 지하철 노선(공식 색 굵은 선)과 모든 역. 매물 핀보다 아래에 깐다
+  function drawSubway(){
+    var SW = window.SUBWAY;
+    if(!SW) return;
+    map.createPane('lines'); map.getPane('lines').style.zIndex = 350;
+    map.createPane('stations'); map.getPane('stations').style.zIndex = 380;
+    var R = L.svg({pane:'lines', padding:0.5}), RS = L.svg({pane:'stations'});
+    SW.lines.forEach(function(l){
+      l.segs.forEach(function(sg){
+        L.polyline(sg,{pane:'lines',renderer:R,color:'#fff',weight:3,opacity:.8,interactive:false}).addTo(map);
+      });
+    });
+    SW.lines.forEach(function(l){
+      l.segs.forEach(function(sg){
+        L.polyline(sg,{pane:'lines',renderer:R,color:l.color,weight:1.6,opacity:.9,interactive:false,lineCap:'round'}).addTo(map);
+      });
+    });
+    var mine = {}; D.stations.forEach(function(s){ mine[s['이름']] = 1; });
+    SW.stations.forEach(function(s){
+      if(mine[s.name]) return;
+      L.circleMarker([s.lat,s.lng],{pane:'stations',renderer:RS,radius:2.2,color:'#191F28',weight:1,fillColor:'#fff',fillOpacity:1,interactive:false}).addTo(map);
+      L.marker([s.lat,s.lng],{pane:'stations',interactive:false,keyboard:false,icon:L.divIcon({className:'sw-label',html:'<span>'+esc(s.name)+'</span>',iconSize:null})}).addTo(map);
+    });
+    var lg = L.control({position:'topright'});
+    lg.onAdd = function(){
+      // 노선 범례는 접어 두고 버튼으로 펼친다 (휴대폰에서 지도 1/3을 가리던 문제)
+      var w = L.DomUtil.create('div','legend-wrap');
+      w.innerHTML = '<button type="button" class="legend-btn">노선 색 보기 ▾</button><div class="legend">' +
+        SW.lines.map(function(l){ return '<div><i style="background:'+l.color+'"></i>'+esc(l.name)+'</div>'; }).join('') + '</div>';
+      var btn = w.querySelector('.legend-btn'), box = w.querySelector('.legend');
+      btn.onclick = function(){ var o = box.classList.toggle('open'); btn.textContent = o ? '노선 색 접기 ▴' : '노선 색 보기 ▾'; };
+      L.DomEvent.disableClickPropagation(w); L.DomEvent.disableScrollPropagation(w);
+      return w;
+    };
+    lg.addTo(map);
+    var dl = L.control({position:'bottomleft'});
+    dl.onAdd = function(){ var d = L.DomUtil.create('div','dep-legend');
+      d.innerHTML = '<div><i style="background:#FFD43B"></i>보증금 2천 이하</div><div><i style="background:#1FA463"></i>보증금 2천 초과</div><div><b style="color:#FFB800;font-size:15px;margin-right:4px;text-shadow:0 0 1px #8A5A00">★</b>추천 (남향 또는 채광)</div><div><b style="color:#F04452;font-size:14px;margin-right:4px">♥</b>찜한 매물</div>';
+      return d; };
+    dl.addTo(map);
+    function zoomCls(){ var z = map.getZoom(), el = document.getElementById('map'); el.classList.toggle('z-far', z<12); el.classList.toggle('z-mid', z>=12 && z<14); }
+    map.on('zoomend', zoomCls); map.whenReady(zoomCls);
+    // 말풍선이 열리면 범례들을 숨겨 말풍선을 가리지 않게
+    map.on('popupopen', function(){ document.getElementById('map').classList.add('pop-open'); });
+    map.on('popupclose', function(){ document.getElementById('map').classList.remove('pop-open'); });
+  }
+  // 초등학교: 학교 아이콘. 넓게 볼 때는 숨기고(13 미만), 중간은 아이콘만, 가까이는 이름까지
+  var SCHOOL_SVG = '<b>🏫</b>';
+  function drawSchools(){
+    var SC = window.SCHOOLS;
+    if(!SC) return;
+    map.createPane('schools'); map.getPane('schools').style.zIndex = 390;
+    SC.forEach(function(s){
+      L.marker([s.lat,s.lng],{pane:'schools',interactive:false,keyboard:false,icon:L.divIcon({className:'school-pin',html:'<div>'+SCHOOL_SVG+'<span>'+esc(s.name.replace(/초등학교$/,'초'))+'</span></div>',iconSize:null})}).addTo(map);
+    });
+    function zc(){ var z = map.getZoom(), el = document.getElementById('map'); el.classList.toggle('school-off', z<13); el.classList.toggle('school-far', z<15); }
+    map.on('zoomend', zc); map.whenReady(zc);
+  }
+  function renderMap(xs){
+    if(!window.L){ document.getElementById('map').innerHTML='<div class="empty">지도를 불러오지 못했습니다. 인터넷 연결을 확인하세요.</div>'; return; }
+    if(!map){
+      map = L.map('map');
+      if(location.protocol==='file:'){
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Tiles &copy; Esri'}).addTo(map);
+        document.getElementById('mapNote').style.display='block';
+      } else {
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+      }
+      drawSubway();
+      drawSchools();
+      window._lmap = map;
+      layer = L.layerGroup().addTo(map);
+    }
+    layer.clearLayers(); ZP = {};
+    var pts = [];
+    D.stations.forEach(function(s){
+      var focus = st.area==='전체' || st.area===s['이름'];
+      var ring = L.circle([s.lat,s.lng],{radius:c['역_반경_m'],color:'#0B3D91',weight:3,dashArray:'8 6',fillColor:'#1B64DA',fillOpacity:.07,interactive:false}).addTo(layer);
+      L.circleMarker([s.lat,s.lng],{radius:6,color:'#fff',weight:2,fillColor:'#0B3D91',fillOpacity:1,interactive:false}).addTo(layer);
+      // 북쪽 3km 안에 다른 역이 있으면 이름표를 아래로 내려 겹치지 않게
+      var below = D.stations.some(function(o){ return o!==s && o.lat>s.lat && map.distance([s.lat,s.lng],[o.lat,o.lng])<3000; });
+      L.marker([s.lat,s.lng],{interactive:false,keyboard:false,icon:L.divIcon({className:'st-label'+(below?' below':''),html:'<span>'+esc(s['이름'])+'</span>',iconSize:null})}).addTo(layer);
+      if(focus && st.area!=='전체'){ var rb = ring.getBounds(); pts.push(rb.getSouthWest(), rb.getNorthEast()); }
+    });
+    xs.forEach(function(x){
+      if(!x.lat) return;
+      var isRec = x.rec && x.rec.length;
+      var color = x.deposit <= 2000 ? '#FFD43B' : '#1FA463';
+      L.circleMarker([x.lat,x.lng],{radius:isRec?11:8,color:'#fff',weight:2,fillColor:color,fillOpacity:1})
+        .bindPopup(function(){ return '<div class="pop"><b>'+won(x.deposit)+' / '+x.rent+'</b> 관리비 '+(x.manage!=null?x.manage+'만':'-')+'<br>'+(isRec?'<span style="color:#8A5A00;font-weight:700">추천: '+esc(x.rec.join(' · '))+'</span><br>':'')+esc(x.room.replace('+','')+' · '+(x.area||'')+'㎡ · '+floorText(x)+(x.dir?' · '+x.dir:''))+'<br>'+esc(x.dong)+'<br>'+x.links.map(function(l){return '<a href="'+esc(l.url)+'" target="_blank" rel="noopener">'+esc(l.src)+'</a>';}).join(' · ')+' · <a href="'+naverUrl(x)+'" target="_blank" rel="noopener">네이버 지도</a> · <a href="'+roadUrl(x)+'" target="_blank" rel="noopener">로드뷰</a>'+'<br><button type="button" class="pzz' + (ZZ[x.id] ? ' on' : '') + '" data-id="' + esc(x.id) + '">' + (ZZ[x.id] ? '♥ 찜 해제' : '♡ 찜하기') + '</button><button type="button" class="phd" data-id="' + esc(x.id) + '">' + (HD[x.id] ? '숨김 해제' : '✕ 이 매물 숨기기') + '</button></div>'; })
+        .addTo(layer);
+      if(isRec) L.marker([x.lat,x.lng],{interactive:false,keyboard:false,icon:L.divIcon({className:'star-pin',html:'<span>★</span>',iconSize:null})}).addTo(layer);
+      ZP[x.id] = {lat:x.lat, lng:x.lng, rec:isRec}; zzPin(x.id);
+      pts.push([x.lat,x.lng]);
+    });
+    // 아래쪽은 보증금 범례가 덮으니 여유를 더 둔다
+    if(pts.length) map.fitBounds(pts,{paddingTopLeft:[30,50],paddingBottomRight:[30,window.innerWidth<=600?90:110],maxZoom:15}); else map.setView([37.5,127.07],11);
+    setTimeout(function(){ map.invalidateSize(); }, 50);
+  }
+  function render(){
+    renderAreas();
+    renderStats();
+    document.getElementById('fRec').classList.toggle('rec-on', st.onlyRec);
+    document.getElementById('fNew').classList.toggle('on', st.onlyNew);
+    document.getElementById('fDrop').classList.toggle('on', st.onlyDrop);
+    document.getElementById('fApt').classList.toggle('on', !!st.onlyApt);
+    document.getElementById('fDaga').classList.toggle('on', !!st.onlyDaga);
+    document.getElementById('fDase').classList.toggle('on', !!st.onlyDase);
+    var vis = items.filter(function(x){ return !HD[x.id]; });
+    document.getElementById('aptN').textContent = vis.filter(function(x){return x.kind==='아파트';}).length;
+    document.getElementById('dagaN').textContent = vis.filter(function(x){return x.htype==='다가구';}).length;
+    document.getElementById('daseN').textContent = vis.filter(function(x){return x.htype==='다세대' || x.htype==='연립';}).length;
+    document.getElementById('fZz').classList.toggle('on', !!st.onlyZz);
+    document.getElementById('fHd').classList.toggle('on', !!st.showHd);
+    document.getElementById('hdN').textContent = items.filter(function(x){ return HD[x.id]; }).length;
+    document.getElementById('sort').value = st.sort;
+    document.getElementById('vCard').classList.toggle('on', st.view==='card');
+    document.getElementById('vMap').classList.toggle('on', st.view==='map');
+    var xs = filtered();
+    var g = document.getElementById('grid'), m = document.getElementById('map');
+    g.style.display = st.view==='card' ? '' : 'none';
+    m.style.display = st.view==='map' ? 'block' : 'none';
+    if(st.view==='card') g.innerHTML = xs.length ? xs.map(card).join('') : '<div class="empty">조건에 맞는 매물이 없습니다.</div>';
+    else renderMap(xs);
+  }
+  document.getElementById('fRec').onclick = function(){ st.onlyRec=!st.onlyRec; save(); render(); };
+  document.getElementById('fNew').onclick = function(){ st.onlyNew=!st.onlyNew; save(); render(); };
+  document.getElementById('fDrop').onclick = function(){ st.onlyDrop=!st.onlyDrop; save(); render(); };
+  document.getElementById('fApt').onclick = function(){ st.onlyApt=!st.onlyApt; save(); render(); };
+  document.getElementById('fDaga').onclick = function(){ st.onlyDaga=!st.onlyDaga; save(); render(); };
+  document.getElementById('fDase').onclick = function(){ st.onlyDase=!st.onlyDase; save(); render(); };
+  document.getElementById('fZz').onclick = function(){ st.onlyZz=!st.onlyZz; st.showHd=false; save(); render(); };
+  document.getElementById('fHd').onclick = function(){ st.showHd=!st.showHd; if(st.showHd) st.onlyZz=false; save(); render(); };
+  // 카드의 숨기기 / 지도 말풍선의 숨기기: 누르면 바로 목록과 지도에서 빠진다
+  document.addEventListener('click', function(e){
+    var bt = e.target.closest('.hd, .phd'); if(!bt) return;
+    e.preventDefault(); e.stopPropagation();
+    toggleHd(bt.getAttribute('data-id'));
+    if(map) map.closePopup();
+    var keep = map ? map.getBounds() : null;
+    render();
+    if(keep && st.view==='map') map.fitBounds(keep);  // 숨긴 뒤에도 보던 지도 위치 유지
+  });
+  document.getElementById('grid').addEventListener('click', function(e){
+    var bt = e.target.closest('.zz'); if(!bt) return;
+    e.preventDefault(); toggleZz(bt.getAttribute('data-id'));
+    if(st.onlyZz){ render(); return; }
+    var on = !!ZZ[bt.getAttribute('data-id')]; bt.classList.toggle('on', on); bt.textContent = on ? '♥' : '♡';
+  });
+  document.getElementById('zzN').textContent = Object.keys(ZZ).length;
+  loadZzFile();
+  loadHdFile();
+  document.addEventListener('click', function(e){
+    var bt = e.target.closest('.pzz'); if(!bt) return;
+    var id = bt.getAttribute('data-id'); toggleZz(id);
+    var on = !!ZZ[id]; bt.classList.toggle('on', on); bt.textContent = on ? '♥ 찜 해제' : '♡ 찜하기';
+    document.querySelectorAll('#grid .zz').forEach(function(z){ if(z.getAttribute('data-id')===id){ z.classList.toggle('on', on); z.textContent = on ? '♥' : '♡'; } });
+  });
+  document.getElementById('sort').onchange = function(e){ st.sort=e.target.value; save(); render(); };
+  document.getElementById('vCard').onclick = function(){ st.view='card'; save(); render(); };
+  document.getElementById('vMap').onclick = function(){ st.view='map'; save(); render(); };
+  render();
+})();
+</script>
+</body>
+</html>
