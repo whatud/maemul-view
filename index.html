@@ -161,6 +161,8 @@ select{font:inherit;font-size:14px;padding:7px 10px;border:1px solid var(--line)
     <button class="chip" id="fRec">추천만 (남향 또는 채광)</button>
     <button class="chip" id="fNew">신규 매물만 (3일 이내)</button>
     <button class="chip" id="fDrop">가격 내린 것만</button>
+    <button class="chip" id="fBig">15평 이상 <span class="n" id="bigN">0</span></button>
+    <button class="chip" id="fPet">반려동물 가능 <span class="n" id="petN">0</span></button>
     <button class="chip" id="fApt">아파트 <span class="n" id="aptN">0</span></button>
     <button class="chip" id="fDase">다세대 <span class="n" id="daseN">0</span></button>
     <button class="chip" id="fDaga">다가구 <span class="n" id="dagaN">0</span></button>
@@ -298,6 +300,8 @@ select{font:inherit;font-size:14px;padding:7px 10px;border:1px solid var(--line)
       if(st.onlyRec && !(x.rec && x.rec.length)) return false;
       if(st.onlyNew && !x.new) return false;
       if(st.onlyDrop && !x.drop) return false;
+      if(st.onlyBig && !(x.area >= BIG_M2)) return false;   // 전용 15평 = 49.6㎡ 이상
+      if(st.onlyPet && x.pet!=='가능') return false;        // 설명글에 '반려동물 가능'이 적힌 매물
       // 아파트·다세대·다가구: 여러 개 켜면 켠 종류가 다 보인다 (연립은 다세대 쪽에 함께)
       if(st.onlyApt || st.onlyDaga || st.onlyDase){
         var ok = (st.onlyApt && x.kind==='아파트') || (st.onlyDaga && x.htype==='다가구') || (st.onlyDase && (x.htype==='다세대' || x.htype==='연립'));
@@ -322,6 +326,7 @@ select{font:inherit;font-size:14px;padding:7px 10px;border:1px solid var(--line)
   function naverUrl(x){ return 'https://map.naver.com/p?c='+x.lng+','+x.lat+',19,0,0,0,dh'; }
   function roadUrl(x){ return 'https://map.kakao.com/link/roadview/'+x.lat+','+x.lng; }
   // 카드 가격 앞에 붙는 위치: '마포구 망원동'. 직방은 시·구 이름이 없어 지역 이름으로 채운다
+  var BIG_M2 = 15 * 3.3058;  // 15평
   function placeName(x){
     var gu = x.sgg || (x.areas||[]).filter(function(a){ return /(구|시)$/.test(a); })[0] || (x.areas||[])[0] || '';
     gu = gu.replace(/^(\S+시) (\S+구)$/, '$1');  // '안양시 동안구' → '안양시'
@@ -459,10 +464,14 @@ select{font:inherit;font-size:14px;padding:7px 10px;border:1px solid var(--line)
     document.getElementById('fRec').classList.toggle('rec-on', st.onlyRec);
     document.getElementById('fNew').classList.toggle('on', st.onlyNew);
     document.getElementById('fDrop').classList.toggle('on', st.onlyDrop);
+    document.getElementById('fBig').classList.toggle('on', !!st.onlyBig);
+    document.getElementById('fPet').classList.toggle('on', !!st.onlyPet);
     document.getElementById('fApt').classList.toggle('on', !!st.onlyApt);
     document.getElementById('fDaga').classList.toggle('on', !!st.onlyDaga);
     document.getElementById('fDase').classList.toggle('on', !!st.onlyDase);
     var vis = items.filter(function(x){ return !HD[x.id]; });
+    document.getElementById('bigN').textContent = vis.filter(function(x){return x.area >= BIG_M2;}).length;
+    document.getElementById('petN').textContent = vis.filter(function(x){return x.pet==='가능';}).length;
     document.getElementById('aptN').textContent = vis.filter(function(x){return x.kind==='아파트';}).length;
     document.getElementById('dagaN').textContent = vis.filter(function(x){return x.htype==='다가구';}).length;
     document.getElementById('daseN').textContent = vis.filter(function(x){return x.htype==='다세대' || x.htype==='연립';}).length;
@@ -482,6 +491,8 @@ select{font:inherit;font-size:14px;padding:7px 10px;border:1px solid var(--line)
   document.getElementById('fRec').onclick = function(){ st.onlyRec=!st.onlyRec; save(); render(); };
   document.getElementById('fNew').onclick = function(){ st.onlyNew=!st.onlyNew; save(); render(); };
   document.getElementById('fDrop').onclick = function(){ st.onlyDrop=!st.onlyDrop; save(); render(); };
+  document.getElementById('fBig').onclick = function(){ st.onlyBig=!st.onlyBig; save(); render(); };
+  document.getElementById('fPet').onclick = function(){ st.onlyPet=!st.onlyPet; save(); render(); };
   document.getElementById('fApt').onclick = function(){ st.onlyApt=!st.onlyApt; save(); render(); };
   document.getElementById('fDaga').onclick = function(){ st.onlyDaga=!st.onlyDaga; save(); render(); };
   document.getElementById('fDase').onclick = function(){ st.onlyDase=!st.onlyDase; save(); render(); };
